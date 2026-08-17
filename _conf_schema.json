@@ -1,0 +1,95 @@
+{
+  "b50_llm_url": {
+    "description": "LLM API 地址",
+    "hint": "OpenAI 接口的 base URL",
+    "type": "string",
+    "default": "https://api.openai.com/v1"
+  },
+  "b50_llm_key": {
+    "description": "LLM API Key",
+    "hint": "用于生成 B50 分析；只保存在 AstrBot 插件配置中，不要提交到 Git",
+    "obvious_hint": true,
+    "type": "string",
+    "default": ""
+  },
+  "b50_llm_model": {
+    "description": "LLM 模型",
+    "hint": "服务提供的模型名称",
+    "type": "string",
+    "default": "your-model-name"
+  },
+  "b50_llm_max_tokens": {
+    "description": "最大输出 Token",
+    "hint": "默认 2048；低于 2048 时插件会自动要求模型缩短正文，避免 JSON 被截断",
+    "type": "int",
+    "default": 2048
+  },
+  "b50_llm_input_price_per_million": {
+    "description": "LLM 输入单价（元/百万 Token）",
+    "hint": "用于计算雪花消耗；缺省按 DeepSeek V4 Flash 缓存未命中输入价 1 元计算，cached_tokens 始终不计费；填 0 也会使用缺省价",
+    "type": "float",
+    "default": 1.0
+  },
+  "b50_llm_output_price_per_million": {
+    "description": "LLM 输出单价（元/百万 Token）",
+    "hint": "用于计算雪花消耗；缺省按 DeepSeek V4 Flash 输出价 2 元计算；填 0 也会使用缺省价",
+    "type": "float",
+    "default": 2.0
+  },
+  "b50_moderation_model": {
+    "description": "内容审核模型",
+    "hint": "留空时仅使用插件内置关键词规则",
+    "type": "string",
+    "default": ""
+  },
+  "b50_assets_path": {
+    "description": "素材目录",
+    "hint": "留空时自动使用 AstrBot data/assets；也可填写容器内绝对路径",
+    "type": "string",
+    "default": ""
+  },
+  "b50_daily_limit": {
+    "description": "每人每日分析次数",
+    "hint": "0 表示不限次数；注意：AstrBot 管理员不受限制",
+    "type": "int",
+    "default": 0
+  },
+  "maimaidxtoken": {
+    "description": "水鱼开发者 Token",
+    "hint": "可选；配置后优先获取完整游玩记录",
+    "obvious_hint": true,
+    "type": "string",
+    "default": ""
+  },
+  "lxns_dev_token": {
+    "description": "落雪查分器开发者 Token",
+    "hint": "用于“数据源 落雪”的 B50 和 info；用户须在落雪绑定 QQ 并允许第三方读取",
+    "obvious_hint": true,
+    "type": "string",
+    "default": ""
+  },
+  "lxns_api_base": {
+    "description": "落雪 API 地址",
+    "hint": "通常保持默认即可",
+    "type": "string",
+    "default": "https://maimai.lxns.net/api/v0/maimai"
+  },
+  "maimai_alias_api": {
+    "description": "歌曲别名 API 地址",
+    "hint": "默认使用柚子别名服务器；留空时仅使用 data/assets 中的本地别名文件",
+    "type": "string",
+    "default": "https://www.yuzuchan.moe/api/maimaidx"
+  },
+  "query_timeout_seconds": {
+    "description": "普通 B50 查询超时秒数",
+    "hint": "范围 10-180 秒",
+    "type": "int",
+    "default": 60
+  },
+  "analysis_timeout_seconds": {
+    "description": "分析超时秒数",
+    "hint": "范围 15-300 秒",
+    "type": "int",
+    "default": 60
+  }
+}

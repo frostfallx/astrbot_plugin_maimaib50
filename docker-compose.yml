@@ -1,0 +1,40 @@
+services:
+  astrbot:
+    build:
+      context: .
+    container_name: maib50-astrbot
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "6185:6185"
+      - "6199:6199"
+      - "6200:6200"
+    volumes:
+      - ./data:/AstrBot/data
+      - ./:/AstrBot/data/plugins/astrbot_plugin_maib50:ro
+    networks:
+      - maib50
+
+  napcat:
+    image: mlikiowa/napcat-docker:latest
+    container_name: maib50-napcat
+    restart: unless-stopped
+    environment:
+      MODE: astrbot
+      NAPCAT_UID: 1000
+      NAPCAT_GID: 1000
+    depends_on:
+      - astrbot
+    ports:
+      - "6099:6099"
+    volumes:
+      - ./data:/AstrBot/data
+      - ./napcat/config:/app/napcat/config
+      - ./ntqq:/app/.config/QQ
+    networks:
+      - maib50
+
+networks:
+  maib50:
+    driver: bridge

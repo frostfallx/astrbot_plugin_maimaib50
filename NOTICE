@@ -1,0 +1,34 @@
+astrbot_plugin_maib50
+Copyright (C) 2026 frostfallx and contributors
+
+This repository is distributed under the GNU Affero General Public License,
+version 3 only. See LICENSE.
+
+This is a combined and modified work that incorporates or adapts code and
+design conventions from the following projects:
+
+- HanYaaaaaaa/analyze-b50 (MIT)
+- HanYaaaaaaa/nonebot-plugin-b50-analysis (MIT)
+- Zeraora-807/astrbot_plugin_b50_analysis (MIT)
+- AWMC-TEAM/maimaiDX-QueryBot (MIT)
+- Yuri-YuzuChaN/maimaiDX (MIT)
+- ZhiheZier/astrbot_plugin_maimaidx (AGPL-3.0)
+
+Preserved upstream copyright notices include:
+
+- Copyright (c) 2026 HanYaaaaaaa
+- Copyright (c) 2026
+- Copyright (c) 2023 柚子
+- Copyright (c) 2021 Yuri-YuzuChaN
+- Copyright (c) AWMC TEAM and contributors
+
+Exact upstream license copies are stored in LICENSES/. Repository and license
+links are listed in README.md.
+
+Visual design attribution retained in generated output:
+
+- Designed by Yuri-YuzuChaN & BlueDeer233
+- Designed by 寒桠@OneCatBot
+
+Game artwork, covers, fonts, aliases, score data, community statistics and
+other external assets are not included and are not licensed by this project.

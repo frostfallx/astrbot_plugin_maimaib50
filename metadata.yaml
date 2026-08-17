@@ -1,0 +1,8 @@
+name: astrbot_plugin_maib50
+display_name: 舞萌 DX B50 查询与锐评
+desc: 从水鱼或落雪获取 B50 与个人单曲成绩；可选调用 OpenAI-compatible LLM，基于结构化成绩和谱面证据生成趣味锐评。
+version: v0.3.0
+author: frostfallx
+repo: https://github.com/frostfallx/astrbot_plugin_maimaib50
+support_platforms:
+  - aiocqhttp
