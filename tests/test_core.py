@@ -591,6 +591,12 @@ class CommandTests(unittest.TestCase):
         self.assertIn("禁止 Markdown、HTML", _SYSTEM)
         self.assertIn("只能使用纯文本", _SYSTEM)
         self.assertNotIn("<r>", _SYSTEM)
+        self.assertIn("沉稳、直白、审慎", _SYSTEM)
+        self.assertIn("避免夸张赞叹", _SYSTEM)
+        self.assertNotIn("OneCat 式锐评", _SYSTEM)
+        self.assertIn('"push_recommendations"', _SYSTEM.format(
+            length_instruction="控制篇幅", style_instruction=""
+        ))
 
     def test_token_usage_is_converted_to_snowflakes(self) -> None:
         config = Config.from_dict(
@@ -660,6 +666,91 @@ class CommandTests(unittest.TestCase):
             MaiB50Plugin._style_from_message("分析B50"),
             "",
         )
+
+    def test_admin_analysis_argument_selects_target_and_preserves_focus(self) -> None:
+        class Event:
+            message_str = "/锐评b50 000000 重点看准度"
+
+            @staticmethod
+            def get_sender_id() -> str:
+                return "sender"
+
+            @staticmethod
+            def is_admin() -> bool:
+                return True
+
+        self.assertEqual(
+            MaiB50Plugin._analysis_target_and_style(Event()),
+            ("000000", "重点看准度"),
+        )
+
+    def test_non_admin_cannot_request_another_players_analysis(self) -> None:
+        class Event:
+            message_str = "锐评b50 000000"
+
+            @staticmethod
+            def get_sender_id() -> str:
+                return "sender"
+
+            @staticmethod
+            def is_admin() -> bool:
+                return False
+
+            @staticmethod
+            def plain_result(message: str) -> tuple[str, str]:
+                return "plain", message
+
+        plugin = object.__new__(MaiB50Plugin)
+        plugin._analyze = AsyncMock()
+
+        async def collect() -> list[tuple[str, str]]:
+            return [item async for item in plugin.analyze_b50(Event())]
+
+        self.assertEqual(
+            asyncio.run(collect()),
+            [("plain", "只有管理员可以指定 QQ 号生成他人的 B50 锐评")],
+        )
+        plugin._analyze.assert_not_awaited()
+
+    def test_admin_analysis_uses_requested_target_and_requester_source(self) -> None:
+        class Event:
+            message_str = "锐评b50 000000"
+
+            @staticmethod
+            def get_sender_id() -> str:
+                return "sender"
+
+            @staticmethod
+            def is_admin() -> bool:
+                return True
+
+            @staticmethod
+            def image_result(path: str) -> tuple[str, str]:
+                return "image", path
+
+            @staticmethod
+            def plain_result(message: str) -> tuple[str, str]:
+                return "plain", message
+
+        plugin = object.__new__(MaiB50Plugin)
+        plugin.active_users = set()
+        plugin.config = SimpleNamespace(
+            b50_daily_limit=0,
+            analysis_timeout_seconds=5,
+            b50_llm_model="test-model",
+        )
+        plugin._analyze = AsyncMock(return_value=(Path("analysis-result.png"), 0))
+        plugin._schedule_cleanup = lambda _path: None
+
+        async def collect() -> list[tuple[str, str]]:
+            return [item async for item in plugin.analyze_b50(Event())]
+
+        with patch("astrbot_plugin_maib50.main.source_store.get", return_value="lxns") as get_source:
+            results = asyncio.run(collect())
+
+        plugin._analyze.assert_awaited_once_with("000000", "", "lxns")
+        get_source.assert_called_once_with("sender")
+        self.assertEqual(results[1][0], "image")
 
     def test_hallucinated_push_song_is_rejected(self) -> None:
         fallback = [

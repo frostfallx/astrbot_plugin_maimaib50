@@ -21,7 +21,8 @@ not from an unprocessed B50 payload.
 | --- | --- |
 | `b50` | Query the sender's B50 using the selected data source. |
 | `b50 <QQ>` | Query another QQ account when the data source permits it. |
-| `分析b50 [focus]` / `锐评b50 [focus]` | Generate an analysis image. |
+| `分析b50 [focus]` / `锐评b50 [focus]` | Generate an analysis image for the sender. |
+| `锐评b50 <QQ> [focus]` | Generate another player's analysis image; administrator only. |
 | `info <full title/alias/song ID>` | Query the sender's scores for one song. |
 | `数据源` | Show the current score source. |
 | `数据源 水鱼` / `数据源 落雪` | Select Diving-Fish or Lxns. |

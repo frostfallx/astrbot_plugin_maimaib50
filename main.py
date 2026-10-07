@@ -171,6 +171,17 @@ class MaiB50Plugin(Star):
         ).strip()
 
     @staticmethod
+    def _analysis_target_and_style(event: AstrMessageEvent) -> tuple[str, str]:
+        requester_id = str(event.get_sender_id())
+        argument = MaiB50Plugin._style_from_message(event.message_str)
+        parts = argument.split(maxsplit=1)
+        if not parts or not re.fullmatch(r"[0-9]+", parts[0]):
+            return requester_id, argument
+        if not MaiB50Plugin._is_admin(event):
+            raise AnalysisRejected("只有管理员可以指定 QQ 号生成他人的 B50 锐评")
+        return parts[0], parts[1].strip() if len(parts) > 1 else ""
+
+    @staticmethod
     def _query_target(event: AstrMessageEvent) -> str:
         text = event.message_str.strip().removeprefix("/").strip()
         argument = re.sub(r"^(?i:b50)(?:\s+|$)", "", text, count=1).strip()
@@ -622,6 +633,11 @@ class MaiB50Plugin(Star):
     @filter.regex(rf"^/?{_ANALYSIS_COMMAND_PATTERN}(?:\s+.*)?$")
     async def analyze_b50(self, event: AstrMessageEvent):
         user_id = str(event.get_sender_id())
+        try:
+            target_id, style = self._analysis_target_and_style(event)
+        except AnalysisRejected as exc:
+            yield event.plain_result(str(exc))
+            return
         if user_id in self.active_users:
             yield event.plain_result("您正在进行分析，请稍等完成后再试～")
             return
@@ -640,8 +656,8 @@ class MaiB50Plugin(Star):
             )
             image_path, snowflakes = await asyncio.wait_for(
                 self._analyze(
-                    user_id,
-                    self._style_from_message(event.message_str),
+                    target_id,
+                    style,
                     source_store.get(user_id),
                 ),
                 timeout=self.config.analysis_timeout_seconds,
