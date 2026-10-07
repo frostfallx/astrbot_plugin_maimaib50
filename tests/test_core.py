@@ -41,6 +41,7 @@ from astrbot_plugin_maib50.data_source import (
 from astrbot_plugin_maib50.fetch import (
     PlayerNotFoundError,
     _fetch_diving_fish_music_records,
+    _fetch_dev_records,
     _fetch_lxns_music_records,
     _fetch_lxns_player,
     _is_new,
@@ -131,6 +132,64 @@ class DataSourceTests(unittest.TestCase):
         context.__aenter__ = AsyncMock(return_value=client)
         context.__aexit__ = AsyncMock(return_value=False)
         return context, client
+
+    def test_developer_records_use_live_b50_groups_when_catalog_is_stale(self) -> None:
+        old = {
+            "song_id": 1, "title": "Old song", "level_index": 3, "type": "DX", "ra": 300
+        }
+        extra = {
+            "song_id": 2, "title": "Extra song", "level_index": 3, "type": "DX", "ra": 280
+        }
+        new = {
+            "song_id": 3, "title": "New song", "level_index": 3, "type": "DX", "ra": 315
+        }
+        response = MagicMock(status_code=200)
+        response.json.return_value = {"records": [old, extra, new], "rating": 895}
+        context, client = self._http_client(response)
+        client.get.return_value = response
+        public = {"charts": {"sd": [old], "dx": [new]}}
+
+        with (
+            patch("astrbot_plugin_maib50.fetch.httpx.AsyncClient", return_value=context),
+            patch("astrbot_plugin_maib50.fetch.get_music_lookup", return_value={}),
+            patch(
+                "astrbot_plugin_maib50.fetch._fetch_public_b50",
+                AsyncMock(return_value=public),
+            ),
+        ):
+            result = asyncio.run(_fetch_dev_records("123456", "developer-token"))
+
+        self.assertEqual(
+            [row["title"] for row in result["charts"]["sd"]],
+            ["Old song", "Extra song"],
+        )
+        self.assertEqual([row["title"] for row in result["charts"]["dx"]], ["New song"])
+        b35, b15 = split_b50_charts(build_context(result))
+        self.assertEqual([row["title"] for row in b15], ["New song"])
+        self.assertEqual([row["title"] for row in b35], ["Old song", "Extra song"])
+
+    def test_developer_records_remain_available_if_live_b50_fails(self) -> None:
+        record = {"song_id": 1, "title": "Known song", "level_index": 3, "ra": 300}
+        response = MagicMock(status_code=200)
+        response.json.return_value = {"records": [record], "rating": 300}
+        context, client = self._http_client(response)
+        client.get.return_value = response
+        lookup = {"1": {"basic_info": {"is_new": True}}}
+
+        with (
+            patch("astrbot_plugin_maib50.fetch.httpx.AsyncClient", return_value=context),
+            patch("astrbot_plugin_maib50.fetch.get_music_lookup", return_value=lookup),
+            patch(
+                "astrbot_plugin_maib50.fetch._fetch_public_b50",
+                AsyncMock(side_effect=ValueError("unavailable")),
+            ),
+        ):
+            result = asyncio.run(_fetch_dev_records("123456", "developer-token"))
+
+        self.assertEqual(result["charts"]["sd"], [])
+        self.assertEqual(
+            [row["title"] for row in result["charts"]["dx"]], ["Known song"]
+        )
 
     def test_source_aliases_and_persistence(self) -> None:
         self.assertEqual(parse_source("水鱼"), DIVING_FISH)
