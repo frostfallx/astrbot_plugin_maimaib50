@@ -168,6 +168,11 @@ async def _fetch_dev_records(qq: str, dev_token: str) -> dict | None:
 
     lookup = get_music_lookup()
     old, new = _sort_old_new(records, lookup)
+    try:
+        public = await _fetch_public_b50(qq)
+        old, new = _merge_public_b50_charts(old, new, public)
+    except (httpx.HTTPError, TypeError, ValueError) as exc:
+        logger.warning(f"获取水鱼实时 B50 分组失败，使用曲库分组：{exc}")
     total_ra = sum(_i(c.get("ra")) for c in old) + sum(_i(c.get("ra")) for c in new)
     return {
         "nickname": str(data.get("nickname") or f"Player({qq})"),
@@ -413,6 +418,33 @@ def _sort_old_new(
     old.sort(key=lambda x: _i(x.get("ra")), reverse=True)
     new.sort(key=lambda x: _i(x.get("ra")), reverse=True)
     return old, new
+
+
+def _merge_public_b50_charts(
+    old: list[dict], new: list[dict], public: dict
+) -> tuple[list[dict], list[dict]]:
+    charts = public.get("charts") if isinstance(public, dict) else None
+    if not isinstance(charts, dict):
+        return old, new
+    public_old, public_new = charts.get("sd"), charts.get("dx")
+    if not isinstance(public_old, list) or not isinstance(public_new, list):
+        return old, new
+    if not public_old and not public_new:
+        return old, new
+
+    def key(record: dict) -> tuple[str, int]:
+        return (
+            str(record.get("song_id") or record.get("music_id") or ""),
+            _i(record.get("level_index"), -1),
+        )
+
+    visible_old = [dict(record) for record in public_old if isinstance(record, dict)]
+    visible_new = [dict(record) for record in public_new if isinstance(record, dict)]
+    visible_ids = {key(record) for record in visible_old + visible_new}
+    return (
+        visible_old + [record for record in old if key(record) not in visible_ids],
+        visible_new + [record for record in new if key(record) not in visible_ids],
+    )
 
 
 def _i(v: Any, d: int = 0) -> int:
